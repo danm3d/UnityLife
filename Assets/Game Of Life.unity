@@ -174,9 +174,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8f85bbd2bfd53df4093f67838aaf150f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Rules: 0
+  speed: .25999999
   width: 128
   height: 128
-  speed: .125
+  defaultMaterial: {fileID: 2100000, guid: 2f0cce9821d027a4e88cc02e8ac22d83, type: 2}
 --- !u!4 &534234422
 Transform:
   m_ObjectHideFlags: 0

@@ -115,7 +115,7 @@ MonoBehaviour:
   Rules: 0
   speed: .25999999
   width: 256
-  height: 256
+  height: 128
 --- !u!4 &534234422
 Transform:
   m_ObjectHideFlags: 0

@@ -12,9 +12,7 @@ public class GameOfLife : MonoBehaviour
 
 	public LifeRules Rules = new LifeRules ();
 	private bool maze = false;
-	[Range(0.1f, 2f)]
-	public float
-		speed = .25f;
+	public float speed = .25f;
 	public int width = 128, height = 128;
 	private bool[,] grid;
 	private bool wrapEdges = true;
@@ -25,15 +23,15 @@ public class GameOfLife : MonoBehaviour
 	private void OnGUI ()
 	{
 		GUI.DrawTexture (textureRect, golTexture, ScaleMode.StretchToFill);
-		GUILayout.BeginArea (new Rect (Screen.width / 2 - 256, Screen.height - 128, 512, 256),"Settings");
+		GUILayout.BeginArea (new Rect (Screen.width / 2 - 256, Screen.height - 128, 512, 256), "Settings");
 		if (GUILayout.Button ("Randomise")) {
 			RandomiseGrid (ref grid);
 		}
 		if (GUILayout.Button ("Clear")) {
 			ClearGrid (ref grid);
 		}
-		GUILayout.Label("Speed: "+1/speed);
-		speed = GUILayout.HorizontalSlider(speed, 2f, .1f);
+		GUILayout.Label ("Speed: " + speed);
+		speed = GUILayout.HorizontalSlider (speed, 5f, .01f);
 		maze = GUILayout.Toggle (maze, maze ? "Conway" : "Maze Rules");
 		GUILayout.EndArea ();
 	}

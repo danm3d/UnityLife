@@ -24,15 +24,18 @@ public class GameOfLife : MonoBehaviour
 
 	private void OnGUI ()
 	{
-		speed = GUI.VerticalSlider (new Rect (0, 0, 64, Screen.height), speed, 0f, .5f);
 		GUI.DrawTexture (textureRect, golTexture, ScaleMode.StretchToFill);
-		if (GUI.Button (new Rect (32, 70, 128, 64), "Randomise")) {
+		GUILayout.BeginArea (new Rect (Screen.width / 2 - 256, Screen.height - 128, 512, 256),"Settings");
+		if (GUILayout.Button ("Randomise")) {
 			RandomiseGrid (ref grid);
 		}
-		if (GUI.Button (new Rect (32, 150, 128, 64), "Clear")) {
+		if (GUILayout.Button ("Clear")) {
 			ClearGrid (ref grid);
 		}
-		maze = GUI.Toggle (new Rect (32, 210, 128, 64), maze, maze ? "Conway" : "Maze Rules");
+		GUILayout.Label("Speed: "+1/speed);
+		speed = GUILayout.HorizontalSlider(speed, 2f, .1f);
+		maze = GUILayout.Toggle (maze, maze ? "Conway" : "Maze Rules");
+		GUILayout.EndArea ();
 	}
 
 	private void Start ()
@@ -42,6 +45,11 @@ public class GameOfLife : MonoBehaviour
 		textureRect = new Rect (Screen.width / 2 - width, Screen.height / 2 - width, width * 2, height * 2);
 		grid = new bool[width, height];
 		RandomiseGrid (ref grid);
+		for (int row = 0; row < width; row++) {
+			for (int col = 0; col < height; col++) {
+				golTexture.SetPixel (row, col, grid [row, col] ? Color.black : Color.white);
+			}
+		}
 		Camera.main.transform.position = new Vector3 (grid.GetLength (0) / 2, grid.GetLength (1) / 2, -100);
 		StartCoroutine ("Epoch");
 	}
@@ -105,7 +113,10 @@ public class GameOfLife : MonoBehaviour
 				} else {
 					nextGrid [row, col] = neighbours == 3;
 				}
-				golTexture.SetPixel (row, col, nextGrid [row, col] ? Color.black : Color.white);
+				if (nextGrid [row, col] != grid [row, col]) {
+					
+					golTexture.SetPixel (row, col, nextGrid [row, col] ? Color.black : Color.white);
+				}
 			}
 		}
 		golTexture.Apply ();

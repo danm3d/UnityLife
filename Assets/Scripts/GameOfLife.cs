@@ -1,5 +1,5 @@
-﻿using System.Collections;
-using UnityEngine;
+﻿using UnityEngine;
+using Random = UnityEngine.Random;
 
 public enum LifeRules
 {
@@ -9,106 +9,86 @@ public enum LifeRules
 
 public class GameOfLife : MonoBehaviour
 {
-	public LifeRules Rules = new LifeRules();
-	private bool maze = false;
-	public float speed = .25f;
-	public int width = 128, height = 128;
+	protected Texture2D golTexture;
 
-	private bool[,] grid;
-	private bool wrapEdges = true;
-	private Rect textureRect;
-	private Texture2D golTexture;
-	#region MonoBehaviours
+	protected bool[,] grid;
 
-	private void OnGUI()
+	[SerializeField, Header("Grid Settings")]
+	protected int width = 128;
+
+	[SerializeField]
+	protected int height = 128;
+
+	protected bool maze = false;
+
+	[SerializeField]
+	protected MeshRenderer meshRenderer;
+
+	[SerializeField]
+	protected Camera cam;
+
+	[SerializeField]
+	protected LifeRules Rules;
+
+	protected Rect textureRect;
+
+
+	[SerializeField, Range(0.05f, 1f)]
+	protected float updateRate = .05f;
+	protected float timer;
+
+	[SerializeField]
+	protected bool wrapEdges = true;
+
+	protected void ClearGrid(ref bool[,] grid)
 	{
-		GUI.DrawTexture(textureRect, golTexture, ScaleMode.StretchToFill);
-		GUILayout.BeginArea(new Rect(Screen.width / 2 - 256, Screen.height - 128, 512, 256), "Settings");
-		if (GUILayout.Button("Randomise"))
-		{
-			RandomiseGrid(ref grid);
-		}
-		if (GUILayout.Button("Clear"))
-		{
-			ClearGrid(ref grid);
-		}
-		GUILayout.Label("Speed: " + speed);
-		speed = GUILayout.HorizontalSlider(speed, 5f, .01f);
-		maze = GUILayout.Toggle(maze, maze ? "Conway" : "Maze Rules");
-		GUILayout.EndArea();
-	}
-
-	private void Start()
-	{
-		golTexture = new Texture2D(width, height);
-		golTexture.filterMode = FilterMode.Point;
-		textureRect = new Rect(Screen.width / 2 - width, Screen.height / 2 - width, width * 2, height * 2);
 		grid = new bool[width, height];
-		RandomiseGrid(ref grid);
-		for (int row = 0; row < width; row++)
-		{
-			for (int col = 0; col < height; col++)
-			{
-				golTexture.SetPixel(row, col, grid[row, col] ? Color.black : Color.white);
-			}
-		}
-		Camera.main.transform.position = new Vector3(grid.GetLength(0) / 2, grid.GetLength(1) / 2, -100);
-		StartCoroutine("Epoch");
 	}
 
-	#endregion MonoBehaviours
-
-	#region GameOfLife
-
-	private int CountLivingNeighbours(int x, int y, bool[,] grid)
+	protected int CountLivingNeighbours(int xPos, int yPos, bool[,] grid)
 	{
 		int count = 0;
 
 		for (int j = -1; j <= 1; j++)
 		{
-			if (!wrapEdges && y + j < 0 || y + j >= grid.GetLength(1))
+			if ((!wrapEdges && yPos + j < 0) || yPos + j >= height)
 			{
 				continue;
 			}
 
-			int k = (y + j + grid.GetLength(1)) % grid.GetLength(1);
+			int k = (yPos + j + height) % height;
 
 			for (int i = -1; i <= 1; i++)
 			{
-				if (!wrapEdges && x + i < 0 || x + i >= grid.GetLength(0))
+				if ((!wrapEdges && xPos + i < 0) || xPos + i >= width)
 				{
 					continue;
 				}
-				int h = (x + i + grid.GetLength(0)) % grid.GetLength(0);
+				int h = (xPos + i + width) % width;
 
 				count += grid[h, k] ? 1 : 0;
 			}
 		}
-		return count - (grid[x, y] ? 1 : 0);
-
+		return count - (grid[xPos, yPos] ? 1 : 0);
 	}
 
-	private void ClearGrid(ref bool[,] grid)
+	protected void DrawTexture()
 	{
-		grid = new bool[grid.GetLength(0), grid.GetLength(1)];
+		meshRenderer.material.mainTexture = golTexture;
 	}
 
-	private IEnumerator Epoch()
+	protected void LateUpdate()
 	{
-		while (true)
+		DrawTexture();
+	}
+
+	protected void NextGeneration(ref bool[,] grid)
+	{
+		bool[,] nextGrid = new bool[width, height];
+
+		for (int row = 0; row < width; row++)
 		{
-			NextGeneration(ref grid);
-			yield return new WaitForSeconds(speed);
-		}
-	}
-
-	private void NextGeneration(ref bool[,] grid)
-	{
-		bool[,] nextGrid = new bool[grid.GetLength(0), grid.GetLength(1)];
-
-		for (int row = 0; row < grid.GetLength(0); row++)
-		{
-			for (int col = 0; col < grid.GetLength(1); col++)
+			for (int col = 0; col < height; col++)
 			{
 				bool living = grid[row, col];
 				int neighbours = CountLivingNeighbours(row, col, grid);
@@ -130,8 +110,7 @@ public class GameOfLife : MonoBehaviour
 				}
 				if (nextGrid[row, col] != grid[row, col])
 				{
-
-					golTexture.SetPixel(row, col, nextGrid[row, col] ? Color.black : Color.white);
+					golTexture.SetPixel(row, col, nextGrid[row, col] ? Color.white : Color.black);
 				}
 			}
 		}
@@ -139,16 +118,63 @@ public class GameOfLife : MonoBehaviour
 		grid = nextGrid;
 	}
 
-	private void RandomiseGrid(ref bool[,] grid)
+	protected void RandomiseGrid(ref bool[,] grid)
 	{
-		for (int row = 0; row < grid.GetLength(0); row++)
+		for (int row = 0; row < width; row++)
 		{
-			for (int col = 0; col < grid.GetLength(1); col++)
+			for (int col = 0; col < height; col++)
 			{
-				grid[row, col] = Random.Range(0, 10) == 1;
+				grid[row, col] = Random.Range(0f, 1f) > .5f;
 			}
 		}
 	}
 
-	#endregion GameOfLife
+	protected void Start()
+	{
+		float aspect = (float)width / (float)height;
+		meshRenderer.transform.localScale = new Vector3(aspect, 1f);
+		cam.orthographicSize = aspect;
+		golTexture = new Texture2D(width, height);
+		golTexture.filterMode = FilterMode.Point;
+		textureRect = new Rect(Screen.width / 2 - width, Screen.height / 2 - height, width * 2, height * 2);
+		grid = new bool[width, height];
+		RandomiseGrid(ref grid);
+		for (int row = 0; row < width; row++)
+		{
+			for (int col = 0; col < height; col++)
+			{
+				golTexture.SetPixel(row, col, grid[row, col] ? Color.white : Color.black);
+			}
+		}
+	}
+
+	protected void Update()
+	{
+		timer -= Time.deltaTime;
+		if (timer <= 0f)
+		{
+			NextGeneration(ref grid);
+			timer = updateRate;
+		}
+	}
+
+	public void Clear()
+	{
+		ClearGrid(ref grid);
+	}
+
+	public void Randomize()
+	{
+		RandomiseGrid(ref grid);
+	}
+
+	public void SetSpeed(float speed)
+	{
+		updateRate = speed;
+	}
+
+	public void SetIsMazeRule(bool isMaze)
+	{
+		maze = isMaze;
+	}
 }
